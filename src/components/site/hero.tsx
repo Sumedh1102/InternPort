@@ -8,7 +8,6 @@ import {
   CircleScribble,
   FloatingSticker,
   PixelCluster,
-  Scribble,
   Sparkle,
   Star,
   StickerLabel,
@@ -21,14 +20,14 @@ import { TechBadge } from "./tech";
 
 /** Where each floating badge sits around the central visual (desktop). */
 const BADGE_SLOTS = [
-  "left-[2%] top-[6%]",
-  "right-[4%] top-[2%]",
-  "left-[-4%] top-[38%]",
-  "right-[-6%] top-[30%]",
-  "left-[6%] bottom-[10%]",
-  "right-[2%] bottom-[16%]",
-  "left-[30%] top-[-5%]",
-  "right-[26%] bottom-[-4%]",
+  "left-[2%] top-[12%]",
+  "right-[8%] top-[6%]",
+  "left-[-2%] top-[46%]",
+  "right-[0%] top-[34%]",
+  "left-[4%] bottom-[12%]",
+  "right-[2%] bottom-[22%]",
+  "left-[36%] top-[1%]",
+  "right-[30%] bottom-[3%]",
 ] as const;
 
 export function Hero({ earlyBirdFrom, programCount }: { earlyBirdFrom?: number | null; programCount: number }) {
@@ -56,12 +55,12 @@ export function Hero({ earlyBirdFrom, programCount }: { earlyBirdFrom?: number |
             {SITE.program} · applications open
           </StickerLabel>
 
-          <h1 className="font-display-wide text-[clamp(3.1rem,11vw,7.6rem)] uppercase leading-[0.86]">
+          <h1 className="font-display-wide text-[clamp(3rem,10.5vw,7rem)] uppercase leading-[0.86]">
             <span className="block">
               Learn{" "}
               <span className="relative inline-block">
                 today.
-                <Scribble className="absolute -bottom-3 left-0 hidden h-6 w-full text-pink sm:block" />
+                <Sparkle className="absolute -right-8 -top-2 hidden size-8 text-pink sm:block" />
               </span>
             </span>
             <span className="mt-2 block">
@@ -71,7 +70,7 @@ export function Hero({ earlyBirdFrom, programCount }: { earlyBirdFrom?: number |
             </span>
             <span className="relative mt-2 block w-fit">
               tomorrow.
-              <CircleScribble className="pointer-events-none absolute -inset-x-4 -inset-y-3 h-[calc(100%+1.5rem)] w-[calc(100%+2rem)] text-blue" />
+              <CircleScribble className="pointer-events-none absolute -inset-x-3 -inset-y-2 h-[calc(100%+1rem)] w-[calc(100%+1.5rem)] text-blue" />
             </span>
           </h1>
 
@@ -170,21 +169,16 @@ export function Hero({ earlyBirdFrom, programCount }: { earlyBirdFrom?: number |
             </BrowserFrame>
           </div>
 
-          <div aria-hidden className="absolute -right-3 -top-6 z-20 -rotate-6 sm:-right-6">
-            <StickerLabel tone="pink" rotate={0}>
-              AI-forward ✦
-            </StickerLabel>
-          </div>
           <div aria-hidden className="absolute -bottom-10 -left-2 z-20 hidden rotate-[-8deg] sm:block">
             <div className="flex items-end gap-1 font-mono text-xs font-semibold">
               <ArrowCurve className="h-10 w-14 -scale-y-100 rotate-180" />
               <span className="rounded-md bg-paper px-1.5 py-0.5">real projects, reviewed</span>
             </div>
           </div>
-          <PixelCluster className="absolute -left-10 top-4 hidden w-10 text-ink lg:grid" />
+          <PixelCluster className="absolute -left-12 bottom-[18%] hidden w-9 text-ink lg:grid" />
 
           {/* Floating AI & tech badges (decorative) */}
-          <div aria-hidden className="pointer-events-none absolute inset-[-12%] hidden lg:block">
+          <div aria-hidden className="pointer-events-none absolute inset-[-10%] z-20 hidden lg:block">
             {floating.map((b, i) => (
               <div
                 key={b.name}

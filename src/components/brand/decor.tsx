@@ -235,7 +235,7 @@ export function StickerLabel({
   return (
     <span
       className={cn(
-        "inline-flex items-center gap-1.5 rounded-full border-2 border-ink px-3 py-1 font-mono text-[0.7rem] font-bold uppercase tracking-wider shadow-brutal-xs",
+        "inline-flex w-fit shrink-0 items-center gap-1.5 rounded-full border-2 border-ink px-3 py-1 font-mono text-[0.7rem] font-bold uppercase tracking-wider shadow-brutal-xs",
         tones[tone],
         className,
       )}

@@ -53,3 +53,5 @@ firebase-export-*
 
 # env (keep the example)
 !.env.example
+!.env.emulator
+/.scratch/
