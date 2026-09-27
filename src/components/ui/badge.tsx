@@ -5,7 +5,7 @@ import { label } from "@/lib/domain/enums";
 import { cn } from "@/lib/utils";
 
 export const badgeVariants = cva(
-  "inline-flex max-w-full items-center gap-1.5 truncate rounded-full border-2 border-ink px-2.5 py-0.5 text-xs font-semibold leading-5 [&_svg]:size-3.5",
+  "inline-flex w-fit max-w-full shrink-0 items-center gap-1.5 truncate rounded-full border-2 border-ink px-2.5 py-0.5 text-xs font-semibold leading-5 [&_svg]:size-3.5",
   {
     variants: {
       tone: {
