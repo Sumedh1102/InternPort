@@ -1,19 +1,20 @@
 "use client";
 
-import type { FieldValues, Path, UseFormReturn } from "react-hook-form";
-
 import type { ActionResult } from "@/lib/domain/types";
 
+/** The only part of a React Hook Form instance the helper needs (keeps it generic-friendly). */
+interface ErrorSink {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  setError: (name: any, error: { type: string; message?: string }, options?: { shouldFocus: boolean }) => void;
+}
+
 /** Pushes server-side Zod field errors back into React Hook Form. */
-export function applyServerErrors<T extends FieldValues>(
-  form: UseFormReturn<T>,
-  result: ActionResult<unknown>,
-): void {
+export function applyServerErrors(form: ErrorSink, result: ActionResult<unknown>): void {
   if (result.ok || !result.fieldErrors) return;
   let first = true;
   for (const [key, messages] of Object.entries(result.fieldErrors)) {
     if (key === "_form") continue;
-    form.setError(key as Path<T>, { type: "server", message: messages[0] }, { shouldFocus: first });
+    form.setError(key, { type: "server", message: messages[0] }, { shouldFocus: first });
     first = false;
   }
 }
