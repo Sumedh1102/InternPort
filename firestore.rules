@@ -1,0 +1,133 @@
+rules_version = '2';
+
+// Sainam Technology — Firestore security rules.
+//
+// Architecture: every write goes through the Next.js server (Server Actions / Route
+// Handlers) using the Firebase Admin SDK after verifying the session cookie and the
+// user's custom-claim role. The Admin SDK bypasses these rules, so the rules below
+// only need to govern what a browser holding a Firebase ID token may do directly:
+//   * read its own records,
+//   * staff read operational data,
+//   * mark its own notifications as read.
+// Everything else is denied by default. Roles come ONLY from custom claims.
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function signedIn() {
+      return request.auth != null;
+    }
+
+    function role() {
+      return request.auth.token.get('role', 'STUDENT');
+    }
+
+    function isStaff() {
+      return signedIn() && role() in ['MENTOR', 'ADMIN', 'SUPER_ADMIN'];
+    }
+
+    function isAdmin() {
+      return signedIn() && role() in ['ADMIN', 'SUPER_ADMIN'];
+    }
+
+    function ownsField(field) {
+      return signedIn() && resource.data[field] == request.auth.uid;
+    }
+
+    // Default deny.
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    match /users/{uid} {
+      allow get: if signedIn() && request.auth.uid == uid;
+      allow read: if isStaff();
+    }
+
+    match /programs/{programId} {
+      allow read: if resource.data.status in ['PUBLISHED', 'PAUSED'] || isAdmin();
+    }
+
+    match /applications/{applicationId} {
+      allow read: if ownsField('uid') || isAdmin();
+    }
+
+    match /enrollments/{enrollmentId} {
+      allow read: if ownsField('uid') || isStaff();
+    }
+
+    match /batches/{batchId} {
+      allow read: if isStaff();
+    }
+
+    match /courses/{courseId} {
+      allow read: if isStaff();
+    }
+
+    match /lessons/{lessonId} {
+      allow read: if isStaff();
+
+      // Quiz answer keys: never readable by students.
+      match /answerKey/{docId} {
+        allow read: if isAdmin();
+      }
+    }
+
+    match /assignments/{assignmentId} {
+      allow read: if isStaff();
+    }
+
+    match /submissions/{submissionId} {
+      allow read: if ownsField('uid') || isStaff();
+    }
+
+    match /projects/{projectId} {
+      allow read: if ownsField('uid') || isStaff();
+    }
+
+    match /attendance/{recordId} {
+      allow read: if ownsField('uid') || isStaff();
+    }
+
+    match /sessions/{sessionId} {
+      allow read: if isStaff();
+    }
+
+    match /evaluations/{evaluationId} {
+      allow read: if ownsField('uid') || isStaff();
+    }
+
+    match /certificates/{certificateId} {
+      // Public verification is served by the server at /verify/{id}.
+      allow read: if ownsField('studentId') || isAdmin();
+    }
+
+    match /announcements/{announcementId} {
+      allow read: if isStaff() || (signedIn() && resource.data.audience == 'ALL');
+    }
+
+    match /notifications/{notificationId} {
+      allow read: if ownsField('uid');
+      // The only client write in the system: flip `read` to true on your own notification.
+      allow update: if ownsField('uid')
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['read'])
+        && request.resource.data.read == true;
+    }
+
+    match /resources/{resourceId} {
+      allow read: if isStaff();
+    }
+
+    match /settings/{docId} {
+      allow read: if isAdmin();
+    }
+
+    match /team/{memberId} {
+      allow read: if resource.data.visible == true || isAdmin();
+    }
+
+    match /contactMessages/{messageId} {
+      allow read: if isAdmin();
+    }
+  }
+}
