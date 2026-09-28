@@ -67,7 +67,7 @@ export async function submitApplication(input: unknown): Promise<ActionResult<{ 
     }
 
     const resume = data.resumePath
-      ? await verifyUploadedFile(data.resumePath, `users/${session.uid}/resume/`, UPLOAD_POLICIES.resume)
+      ? await verifyUploadedFile(data.resumePath, `resumes/${session.uid}/`, UPLOAD_POLICIES.resume)
       : null;
 
     const ref = col(COL.applications).doc();

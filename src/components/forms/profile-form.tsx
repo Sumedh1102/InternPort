@@ -105,7 +105,7 @@ export function ProfileForm({
               <FileUploader
                 id="p-photo"
                 label="Upload a new photo"
-                pathPrefix={`users/${user.id}/profile/`}
+                pathPrefix={`profile-images/${user.id}/`}
                 accept={["image/png", "image/jpeg", "image/webp"]}
                 maxBytes={2 * 1024 * 1024}
                 value={photo}
@@ -177,7 +177,7 @@ export function ProfileForm({
           <FileUploader
             id="p-resume"
             label={user.resumeUrl ? "Replace resume" : "Upload resume"}
-            pathPrefix={`users/${user.id}/resume/`}
+            pathPrefix={`resumes/${user.id}/`}
             accept={[
               "application/pdf",
               "application/msword",

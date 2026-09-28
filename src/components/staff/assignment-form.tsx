@@ -174,7 +174,7 @@ function AssignmentForm({
         <span className="text-sm font-semibold">Attachments</span>
         <FileUploader
           id="as-attachments"
-          pathPrefix={`assignments/${id}/`}
+          pathPrefix={`internship-documents/assignments/${id}/`}
           accept={STAFF_TYPES}
           maxBytes={20 * 1024 * 1024}
           maxFiles={10}

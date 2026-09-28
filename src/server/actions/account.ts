@@ -33,14 +33,14 @@ async function profilePatch(uid: string, data: z.infer<typeof profileSchema>) {
   if (data.profileImagePath) {
     const file = await verifyUploadedFile(
       data.profileImagePath,
-      `users/${uid}/profile/`,
+      `profile-images/${uid}/`,
       UPLOAD_POLICIES.profileImage,
     );
     patch.profileImage = file.url;
     patch.profileImagePath = file.path;
   }
   if (data.resumePath) {
-    const file = await verifyUploadedFile(data.resumePath, `users/${uid}/resume/`, UPLOAD_POLICIES.resume);
+    const file = await verifyUploadedFile(data.resumePath, `resumes/${uid}/`, UPLOAD_POLICIES.resume);
     patch.resumeUrl = file.url;
     patch.resumePath = file.path;
   }

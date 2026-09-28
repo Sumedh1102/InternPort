@@ -396,7 +396,7 @@ function ResourceForm({ resource, programs, batches, onDone }: { resource?: Reso
       </div>
       <FileUploader
         id="r-file"
-        pathPrefix={`programs/${programId}/resources/`}
+        pathPrefix={`internship-documents/programs/${programId}/resources/`}
         accept={RESOURCE_FILE_TYPES}
         maxBytes={20 * 1024 * 1024}
         value={file}

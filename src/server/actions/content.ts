@@ -120,11 +120,18 @@ export async function saveResource(resourceId: string | null, input: unknown): P
     const session = await actor(ADMIN_ROLES);
     const data = parse(resourceSchema, input);
     if (!data.url && !data.storagePath) throw new ActionError("Add a link or upload a file.");
+    const ref = resourceId ? col(COL.resources).doc(parse(docId, resourceId)) : null;
+    const existing = ref ? fromSnap<Resource>(await ref.get()) : null;
+    if (ref && !existing) throw new ActionError("Resource not found.");
+    const saved = existing?.storagePath
+      ? [{ name: "", path: existing.storagePath, url: existing.url, size: 0, contentType: "" }]
+      : [];
     const file = data.storagePath
       ? await verifyUploadedFile(
           data.storagePath,
-          `programs/${data.programId}/resources/`,
+          `internship-documents/programs/${data.programId}/resources/`,
           UPLOAD_POLICIES.staffFile,
+          saved,
         )
       : null;
     const payload = {
@@ -137,9 +144,7 @@ export async function saveResource(resourceId: string | null, input: unknown): P
       storagePath: file?.path ?? null,
       updatedAt: serverNow(),
     };
-    if (resourceId) {
-      const ref = col(COL.resources).doc(parse(docId, resourceId));
-      if (!fromSnap<Resource>(await ref.get())) throw new ActionError("Resource not found.");
+    if (ref) {
       await ref.update(payload);
     } else {
       await col(COL.resources).add({ ...payload, createdBy: session.uid, createdAt: serverNow() });

@@ -9,17 +9,20 @@
     "lint": "eslint",
     "typecheck": "next typegen && tsc --noEmit",
     "test": "vitest run",
-    "test:rules": "firebase emulators:exec --only firestore,storage --project demo-sainam \"vitest run --config vitest.rules.config.mts\"",
+    "test:rules": "firebase emulators:exec --only firestore --project demo-sainam \"vitest run --config vitest.rules.config.mts\"",
     "test:e2e": "playwright test",
     "emulators": "firebase emulators:start --project demo-sainam",
     "seed": "node --env-file-if-exists=.env.local --import tsx scripts/seed.ts",
     "seed:demo": "node --env-file-if-exists=.env.local --import tsx scripts/seed.ts --demo",
     "set-role": "node --env-file-if-exists=.env.local --import tsx scripts/set-role.ts",
-    "deploy:rules": "firebase deploy --only firestore:rules,firestore:indexes,storage"
+    "storage:setup": "node --env-file-if-exists=.env.local --import tsx scripts/setup-storage.ts",
+    "storage:migrate": "node --env-file-if-exists=.env.local --import tsx scripts/migrate-storage.ts",
+    "deploy:rules": "firebase deploy --only firestore:rules,firestore:indexes"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.128.0",
     "@hookform/resolvers": "^5.9.1",
+    "@supabase/supabase-js": "^2.117.2",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "firebase": "^12.19.0",

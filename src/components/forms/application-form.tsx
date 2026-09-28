@@ -300,7 +300,7 @@ export function ApplicationForm({
           <span className="text-sm font-semibold">Resume (optional)</span>
           <FileUploader
             id="a-resume"
-            pathPrefix={`users/${user.id}/resume/`}
+            pathPrefix={`resumes/${user.id}/`}
             accept={[
               "application/pdf",
               "application/msword",

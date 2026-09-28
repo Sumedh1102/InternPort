@@ -98,7 +98,7 @@ export function SubmissionForm({
             <span className="text-sm font-semibold">Files</span>
             <FileUploader
               id="s-files"
-              pathPrefix={`submissions/${assignmentId}_${uid}/`}
+              pathPrefix={`internship-documents/submissions/${assignmentId}_${uid}/`}
               accept={SUBMISSION_TYPES}
               maxBytes={10 * 1024 * 1024}
               maxFiles={5}

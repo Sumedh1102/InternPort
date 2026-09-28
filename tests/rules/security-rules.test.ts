@@ -7,11 +7,10 @@ import {
   type RulesTestEnvironment,
 } from "@firebase/rules-unit-testing";
 import { doc, getDoc, setDoc, updateDoc, collection, getDocs, query, where } from "firebase/firestore";
-import { ref, uploadBytes, getBytes } from "firebase/storage";
 import { afterAll, beforeAll, beforeEach, describe, it } from "vitest";
 
 /**
- * Firestore + Storage rules. Run with the emulators:
+ * Firestore rules. Run with the emulators:
  *   npm run test:rules
  */
 let env: RulesTestEnvironment;
@@ -23,7 +22,6 @@ beforeAll(async () => {
   env = await initializeTestEnvironment({
     projectId: "demo-sainam-rules",
     firestore: { rules: readFileSync("firestore.rules", "utf8"), host: "127.0.0.1", port: 8080 },
-    storage: { rules: readFileSync("storage.rules", "utf8"), host: "127.0.0.1", port: 9199 },
   });
 });
 
@@ -118,35 +116,5 @@ describe("firestore: quiz answer keys", () => {
     await assertFails(getDoc(doc(withRole("men", "MENTOR").firestore(), "lessons/l1/answerKey/key")));
     await assertSucceeds(getDoc(doc(withRole("men", "MENTOR").firestore(), "lessons/l1")));
     await assertSucceeds(getDoc(doc(withRole("adm", "ADMIN").firestore(), "lessons/l1/answerKey/key")));
-  });
-});
-
-describe("storage", () => {
-  const pdf = new Uint8Array([37, 80, 68, 70]);
-  const png = new Uint8Array([137, 80, 78, 71]);
-
-  it("students upload resumes to their own folder only, as documents", async () => {
-    const storage = student().storage();
-    await assertSucceeds(uploadBytes(ref(storage, "users/stu1/resume/cv.pdf"), pdf, { contentType: "application/pdf" }));
-    await assertFails(uploadBytes(ref(storage, "users/stu2/resume/cv.pdf"), pdf, { contentType: "application/pdf" }));
-    await assertFails(uploadBytes(ref(storage, "users/stu1/resume/cv.html"), pdf, { contentType: "text/html" }));
-  });
-
-  it("enforces size limits", async () => {
-    const big = new Uint8Array(6 * 1024 * 1024);
-    await assertFails(uploadBytes(ref(student().storage(), "users/stu1/resume/big.pdf"), big, { contentType: "application/pdf" }));
-  });
-
-  it("submission folders are bound to the uploader's uid", async () => {
-    await assertSucceeds(uploadBytes(ref(student().storage(), "submissions/asg1_stu1/work.png"), png, { contentType: "image/png" }));
-    await assertFails(uploadBytes(ref(student().storage(), "submissions/asg1_stu2/work.png"), png, { contentType: "image/png" }));
-    await assertFails(getBytes(ref(student("stu2").storage(), "submissions/asg1_stu1/work.png")));
-    await assertSucceeds(getBytes(ref(withRole("men", "MENTOR").storage(), "submissions/asg1_stu1/work.png")));
-  });
-
-  it("only staff upload assignment material; certificates are server-only", async () => {
-    await assertFails(uploadBytes(ref(student().storage(), "assignments/asg1/brief.pdf"), pdf, { contentType: "application/pdf" }));
-    await assertSucceeds(uploadBytes(ref(withRole("men", "MENTOR").storage(), "assignments/asg1/brief.pdf"), pdf, { contentType: "application/pdf" }));
-    await assertFails(uploadBytes(ref(withRole("adm", "SUPER_ADMIN").storage(), "certificates/x/c.pdf"), pdf, { contentType: "application/pdf" }));
   });
 });

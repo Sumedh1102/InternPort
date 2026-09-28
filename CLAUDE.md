@@ -15,6 +15,8 @@ npx vitest run --config vitest.rules.config.mts   # rules tests against emulator
 npm run build                                     # production build; works without Firebase credentials
 npm run set-role -- someone@example.com MENTOR    # set a role claim and sign that user out everywhere
 npm run seed -- --force                           # re-apply scripts/seed-data/programs.ts over admin edits
+npm run storage:setup                             # create/update the private Supabase buckets
+npm run storage:migrate                           # dry run; add `-- --apply` to copy Firebase Storage files
 ```
 
 - **Type checking:** use `npm run typecheck`, not bare `tsc`. The global `PageProps` / `RouteContext` types only exist after `next typegen`.
@@ -28,7 +30,7 @@ npm run seed -- --force                           # re-apply scripts/seed-data/p
 The app is one Next.js 16 App Router project in `src/`:
 
 - **Areas:** the public site lives in `app/(site)` and sign-in pages in `app/(auth)`. The role-gated areas are `app/dashboard` (STUDENT), `app/mentor` (MENTOR) and `app/admin` (ADMIN, SUPER_ADMIN).
-- **Browser Firebase use:** sign-in, direct Storage uploads and a live notifications listener. The listener's mark-as-read `updateDoc` is the only client write `firestore.rules` allows.
+- **Browser Firebase use:** sign-in and a live notifications listener. Uploaded files live in Supabase Storage, not Firebase (see Uploads below). The listener's mark-as-read `updateDoc` is the only client write `firestore.rules` allows.
 
 ### Sessions and roles
 
@@ -73,16 +75,17 @@ Everything under `src/server` imports `server-only`, which throws outside Next.j
 
 ### Uploads and document IDs
 
-- **Uploads:** the browser uploads straight to Storage. For each upload kind, three things must agree:
-  - the `pathPrefix` given to `FileUploader` (`src/components/ui/file-uploader.tsx`);
-  - the path, type and size rule in `storage.rules`;
-  - the action's `verifyUploadedFile(path, expectedPrefix, UPLOAD_POLICIES.<kind>)` call (`src/server/storage.ts`), which re-checks the Storage metadata and builds the download URL on the server.
+- **Uploads:** files live in private Supabase Storage buckets. Supabase RLS can't see Firebase users, so the server enforces access with the service-role key (`src/server/supabase.ts`, server-only). `FileUploader` (`src/components/ui/file-uploader.tsx`) asks the `createUpload` action (`src/server/actions/uploads.ts`) for a one-time signed upload URL, then PUTs the file straight to Supabase. A storage path is `<bucket>/<folder>/<file>`. For each upload kind, three things must agree:
+  - the `pathPrefix` given to `FileUploader`;
+  - the folder pattern, owner rule and `FOLDER_KIND` in `src/lib/domain/storage.ts`, which `createUpload` and `/api/files` apply;
+  - the action's `verifyUploadedFile(path, expectedPrefix, UPLOAD_POLICIES.<kind>, existing)` call (`src/server/storage.ts`), which re-checks the stored object's size and type. Passing the record's saved files as `existing` keeps them as they are, including ones saved while uploads went to Firebase Storage.
+- **File URLs:** Firestore keeps the path plus a `/api/files/<path>` URL. That route checks read access on every request and redirects to a short-lived signed URL. Records saved before the move may still hold Firebase Storage URLs; `npm run storage:migrate` copies those files and rewrites the records.
 - **Deterministic IDs:** some documents have predictable IDs, so writing them is an upsert. Submissions use `${assignmentId}_${uid}`, attendance uses `${sessionId}_${uid}`, and evaluations use `sub_<submissionId>` / `proj_<projectId>`.
-- **Assignment IDs:** `storage.rules` matches submission IDs against `^[A-Za-z0-9]+_<uid>$`, so assignment IDs must be alphanumeric. Firestore auto-IDs are.
+- **Assignment IDs:** the storage rules match submission IDs against `^[A-Za-z0-9]+_<uid>$`, so assignment IDs must be alphanumeric. Firestore auto-IDs are.
 
 ### Route handlers and AI
 
-- **Route handlers:** `src/app/api/*` holds only what Server Actions can't do: the session cookie exchange, streamed AI replies, certificate PDFs, the applications CSV export and the session-reminder cron, which requires a `CRON_SECRET` bearer token. POST handlers check `isSameOrigin()` (`src/server/security.ts`).
+- **Route handlers:** `src/app/api/*` holds only what Server Actions can't do: the session cookie exchange, streamed AI replies, certificate PDFs, the applications CSV export, file access redirects (`/api/files`) and the session-reminder cron, which requires a `CRON_SECRET` bearer token. POST handlers check `isSameOrigin()` (`src/server/security.ts`).
 - **AI:** `getAIProvider()` (`src/server/ai`) picks anthropic, gemini or mock from `AI_PROVIDER`. It returns `null`, turning AI off, for `none` or a missing key. `/api/ai/assistant` enforces a per-user daily quota and builds its prompt from the student's enrollment (`src/server/ai/context.ts`).
 
 ## Conventions

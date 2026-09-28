@@ -75,8 +75,9 @@ export async function submitProject(input: unknown): Promise<ActionResult> {
     }
     const screenshots = await verifyUploadedFiles(
       data.screenshotPaths,
-      `users/${session.uid}/projects/${project.id}/`,
+      `internship-documents/users/${session.uid}/projects/${project.id}/`,
       UPLOAD_POLICIES.screenshot,
+      project.screenshots,
     );
     await ref.update({
       status: target,

@@ -70,7 +70,7 @@ export function ProjectSubmitForm({ project, uid, locked }: { project: Project; 
         <span className="text-sm font-semibold">Screenshots</span>
         <FileUploader
           id={`p-${project.id}-shots`}
-          pathPrefix={`users/${uid}/projects/${project.id}/`}
+          pathPrefix={`internship-documents/users/${uid}/projects/${project.id}/`}
           accept={["image/png", "image/jpeg", "image/webp"]}
           maxBytes={5 * 1024 * 1024}
           maxFiles={6}

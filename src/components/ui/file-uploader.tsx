@@ -1,11 +1,10 @@
 "use client";
 
 import * as React from "react";
-import { deleteObject, ref as storageRef, uploadBytesResumable } from "firebase/storage";
 import { FileUp, Paperclip, X } from "lucide-react";
 
-import { firebaseClient } from "@/lib/firebase/client";
 import { cn, formatBytes } from "@/lib/utils";
+import { createUpload, discardUpload } from "@/server/actions/uploads";
 
 export interface UploadedFile {
   path: string;
@@ -17,7 +16,7 @@ export interface UploadedFile {
 
 interface FileUploaderProps {
   id: string;
-  /** Storage folder, e.g. `submissions/{submissionId}/` — must match storage.rules. */
+  /** Storage folder, e.g. `internship-documents/submissions/{submissionId}/` — see src/lib/domain/storage.ts. */
   pathPrefix: string;
   accept: readonly string[];
   maxBytes: number;
@@ -27,11 +26,6 @@ interface FileUploaderProps {
   label?: string;
   hint?: string;
   disabled?: boolean;
-}
-
-function safeName(name: string) {
-  const cleaned = name.normalize("NFKD").replace(/[^A-Za-z0-9._-]+/g, "-").replace(/-+/g, "-");
-  return cleaned.slice(-80) || "file";
 }
 
 const EXT: Record<string, string> = {
@@ -48,9 +42,27 @@ const EXT: Record<string, string> = {
   "application/vnd.openxmlformats-officedocument.presentationml.presentation": "PPTX",
 };
 
+/** PUTs a file to a Supabase signed upload URL, reporting progress (fetch can't). */
+function putFile(signedUrl: string, file: File, onProgress: (percent: number) => void) {
+  return new Promise<void>((resolve, reject) => {
+    const xhr = new XMLHttpRequest();
+    xhr.open("PUT", signedUrl);
+    xhr.setRequestHeader("content-type", file.type);
+    xhr.setRequestHeader("cache-control", "max-age=3600");
+    xhr.setRequestHeader("x-upsert", "false");
+    xhr.upload.onprogress = (e) => {
+      if (e.lengthComputable) onProgress(Math.round((e.loaded / e.total) * 100));
+    };
+    xhr.onload = () => (xhr.status >= 200 && xhr.status < 300 ? resolve() : reject(new Error(String(xhr.status))));
+    xhr.onerror = () => reject(new Error("network"));
+    xhr.send(file);
+  });
+}
+
 /**
- * FileUploader — validates type & size in the browser, uploads straight to Firebase
- * Storage (rules enforce the same limits), and reports storage paths. The server
+ * FileUploader — validates type & size in the browser, asks the server for a signed
+ * upload URL (the server checks ownership, type and size against the session), and
+ * uploads straight to Supabase Storage. It reports storage paths; the server
  * re-validates every path from Storage metadata before saving it.
  */
 export function FileUploader({
@@ -85,35 +97,30 @@ export function FileUploader({
       setError(`You can attach up to ${maxFiles} file${maxFiles === 1 ? "" : "s"}.`);
       return;
     }
-    const { storage, auth } = firebaseClient();
-    await auth.authStateReady();
-    if (!auth.currentUser) {
-      setError("Please sign in again to upload files.");
+    setProgress(0);
+    const target = await createUpload({
+      folder: pathPrefix,
+      fileName: file.name,
+      contentType: file.type,
+      size: file.size,
+    }).catch(() => null);
+    if (!target?.ok) {
+      setError(target ? target.error : "Upload failed. Check your connection and try again.");
+      setProgress(null);
       return;
     }
-    const path = `${pathPrefix}${Date.now()}-${safeName(file.name)}`;
-    const task = uploadBytesResumable(storageRef(storage, path), file, { contentType: file.type });
-    setProgress(0);
-    await new Promise<void>((resolve) => {
-      task.on(
-        "state_changed",
-        (snap) => setProgress(Math.round((snap.bytesTransferred / snap.totalBytes) * 100)),
-        (err) => {
-          setError(
-            err.code === "storage/unauthorized"
-              ? "Upload blocked. Check the file type/size or sign in again."
-              : "Upload failed. Please try again.",
-          );
-          setProgress(null);
-          resolve();
-        },
-        () => {
-          onChange([...value, { path, name: file.name, size: file.size, contentType: file.type }]);
-          setProgress(null);
-          resolve();
-        },
+    try {
+      await putFile(target.data.signedUrl, file, setProgress);
+      onChange([...value, { path: target.data.path, name: file.name, size: file.size, contentType: file.type }]);
+    } catch (err) {
+      setError(
+        err instanceof Error && err.message === "network"
+          ? "Upload failed. Check your connection and try again."
+          : "Upload blocked. Check the file type/size or sign in again.",
       );
-    });
+    } finally {
+      setProgress(null);
+    }
   }
 
   async function handleFiles(list: FileList | null) {
@@ -124,11 +131,9 @@ export function FileUploader({
 
   async function remove(file: UploadedFile) {
     onChange(value.filter((f) => f.path !== file.path));
-    try {
-      await deleteObject(storageRef(firebaseClient().storage, file.path));
-    } catch {
-      // Already removed or not owned (e.g. previously saved) — detaching is enough.
-    }
+    // Files uploaded in this form have no URL yet; saved ones are only detached, so
+    // the record they belong to keeps a working link until the form is saved.
+    if (!file.url) await discardUpload(file.path).catch(() => undefined);
   }
 
   const full = value.length >= maxFiles;

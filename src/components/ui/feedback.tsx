@@ -142,7 +142,7 @@ export function Avatar({
       aria-hidden={!src}
     >
       {src ? (
-        // eslint-disable-next-line @next/next/no-img-element -- user uploads live on Firebase Storage
+        // eslint-disable-next-line @next/next/no-img-element -- uploads are served through /api/files
         <img src={src} alt={name ? `${name}'s photo` : ""} className="size-full object-cover" />
       ) : (
         initials(name)

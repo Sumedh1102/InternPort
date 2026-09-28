@@ -61,8 +61,9 @@ export async function saveAssignment(
 
     const attachments = await verifyUploadedFiles(
       data.attachmentPaths,
-      `assignments/${id}/`,
+      `internship-documents/assignments/${id}/`,
       UPLOAD_POLICIES.staffFile,
+      existing?.attachments,
     );
 
     const payload = {
@@ -143,8 +144,14 @@ export async function saveSubmission(input: unknown): Promise<ActionResult<{ id:
     }
 
     const id = `${assignment.id}_${session.uid}`;
-    const files = await verifyUploadedFiles(data.filePaths, `submissions/${id}/`, UPLOAD_POLICIES.submission);
     const ref = col(COL.submissions).doc(id);
+    const saved = fromSnap<Submission>(await ref.get());
+    const files = await verifyUploadedFiles(
+      data.filePaths,
+      `internship-documents/submissions/${id}/`,
+      UPLOAD_POLICIES.submission,
+      saved?.files,
+    );
     const target = data.submit ? "SUBMITTED" : "IN_PROGRESS";
 
     await adminDb().runTransaction(async (tx) => {

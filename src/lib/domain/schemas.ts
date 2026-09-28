@@ -524,6 +524,14 @@ export const resourceSchema = z.object({
 });
 export type ResourceInput = z.infer<typeof resourceSchema>;
 
+/** A request for a signed upload URL; the server picks the final file name. */
+export const uploadRequestSchema = z.object({
+  folder: z.string().max(300),
+  fileName: z.string().min(1).max(255),
+  contentType: z.string().max(200),
+  size: z.number().int().positive(),
+});
+
 export const roleChangeSchema = z.object({
   email: z.email(),
   role: z.enum(ROLES),

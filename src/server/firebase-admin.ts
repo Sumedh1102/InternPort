@@ -3,7 +3,6 @@ import "server-only";
 import { applicationDefault, cert, getApp, getApps, initializeApp, type App } from "firebase-admin/app";
 import { getAuth, type Auth } from "firebase-admin/auth";
 import { getFirestore, type Firestore } from "firebase-admin/firestore";
-import { getStorage } from "firebase-admin/storage";
 
 /**
  * Firebase Admin SDK — server only. Credentials come from server environment
@@ -16,14 +15,6 @@ export function usingEmulators(): boolean {
 
 function projectId(): string | undefined {
   return process.env.FIREBASE_ADMIN_PROJECT_ID ?? process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID;
-}
-
-export function storageBucketName(): string | undefined {
-  return (
-    process.env.FIREBASE_ADMIN_STORAGE_BUCKET ??
-    process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET ??
-    (projectId() ? `${projectId()}.appspot.com` : undefined)
-  );
 }
 
 export function isAdminConfigured(): boolean {
@@ -41,7 +32,7 @@ const globalForAdmin = globalThis as unknown as { __sainamFirestore?: Firestore 
 
 function adminApp(): App {
   if (getApps().length) return getApp();
-  const options = { projectId: projectId(), storageBucket: storageBucketName() };
+  const options = { projectId: projectId() };
   const clientEmail = process.env.FIREBASE_ADMIN_CLIENT_EMAIL;
   const privateKey = process.env.FIREBASE_ADMIN_PRIVATE_KEY?.replace(/\\n/g, "\n");
   if (clientEmail && privateKey) {
@@ -64,8 +55,4 @@ export function adminDb(): Firestore {
   db.settings({ ignoreUndefinedProperties: true });
   globalForAdmin.__sainamFirestore = db;
   return db;
-}
-
-export function adminBucket() {
-  return getStorage(adminApp()).bucket(storageBucketName());
 }

@@ -68,7 +68,7 @@ export function ProjectCard({ project }: { project: Project }) {
     <Card className="flex h-full flex-col overflow-hidden">
       <div className="relative aspect-[16/10] border-b-2 border-ink bg-cream-2 bg-grid-sm">
         {cover ? (
-          // eslint-disable-next-line @next/next/no-img-element -- Firebase Storage URLs
+          // eslint-disable-next-line @next/next/no-img-element -- uploads are served through /api/files
           <img src={cover} alt={`Screenshot of ${project.title}`} className="size-full object-cover" loading="lazy" />
         ) : (
           <div className="grid size-full place-items-center font-display text-3xl font-extrabold text-ink/30">
