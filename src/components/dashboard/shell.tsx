@@ -2,7 +2,7 @@
 
 import * as React from "react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { DropdownMenu } from "radix-ui";
 import {
   Award,
@@ -133,6 +133,7 @@ function NavList({ nav, onNavigate }: { nav: NavGroup[]; onNavigate?: () => void
 
 function UserMenu({ user, profileHref }: { user: ShellUser; profileHref: string }) {
   const [pending, setPending] = React.useState(false);
+  const router = useRouter();
   return (
     <DropdownMenu.Root>
       <DropdownMenu.Trigger
@@ -172,7 +173,8 @@ function UserMenu({ user, profileHref }: { user: ShellUser; profileHref: string 
               e.preventDefault();
               setPending(true);
               await logout();
-              window.location.assign("/login");
+              router.replace("/login");
+              router.refresh();
             }}
             className="flex cursor-pointer items-center gap-2 rounded-xl px-3 py-2 text-sm font-semibold outline-none data-[highlighted]:bg-red-soft"
           >

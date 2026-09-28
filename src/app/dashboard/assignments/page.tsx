@@ -7,6 +7,7 @@ import { DataTable } from "@/components/ui/data-table";
 import { EmptyState } from "@/components/ui/feedback";
 import { SUBMISSION_STATUSES, label } from "@/lib/domain/enums";
 import { cn, formatDateTime, relativeTime } from "@/lib/utils";
+import { requestTime } from "@/lib/time";
 import { requireRole } from "@/server/auth/session";
 import { getAssignmentsForEnrollment, getSubmissionsForUser } from "@/server/queries/platform";
 import { getStudentContext } from "@/server/queries/student";
@@ -29,7 +30,7 @@ export default async function AssignmentsPage() {
     getSubmissionsForUser(session.uid),
   ]);
   const byAssignment = new Map(submissions.map((s) => [s.assignmentId, s]));
-  const now = Date.now();
+  const now = requestTime();
 
   return (
     <>

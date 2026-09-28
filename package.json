@@ -9,7 +9,7 @@
     "lint": "eslint",
     "typecheck": "next typegen && tsc --noEmit",
     "test": "vitest run",
-    "test:rules": "firebase emulators:exec --only firestore,storage --project demo-sainam \"vitest run --config vitest.rules.config.ts\"",
+    "test:rules": "firebase emulators:exec --only firestore,storage --project demo-sainam \"vitest run --config vitest.rules.config.mts\"",
     "test:e2e": "playwright test",
     "emulators": "firebase emulators:start --project demo-sainam",
     "seed": "node --env-file-if-exists=.env.local --import tsx scripts/seed.ts",
@@ -47,7 +47,6 @@
     "@types/qrcode": "^1.5.6",
     "@types/react": "^19",
     "@types/react-dom": "^19",
-    "@vitejs/plugin-react": "^6.1.1",
     "eslint": "^9",
     "eslint-config-next": "16.3.6",
     "firebase-tools": "^15.31.0",
@@ -55,7 +54,6 @@
     "tailwindcss": "^4",
     "tsx": "^4.23.15",
     "typescript": "^5",
-    "vite-tsconfig-paths": "^6.1.1",
     "vitest": "^5.0.2"
   },
   "engines": {

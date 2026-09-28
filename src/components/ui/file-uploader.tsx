@@ -86,6 +86,7 @@ export function FileUploader({
       return;
     }
     const { storage, auth } = firebaseClient();
+    await auth.authStateReady();
     if (!auth.currentUser) {
       setError("Please sign in again to upload files.");
       return;

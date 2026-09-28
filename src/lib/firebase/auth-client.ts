@@ -128,6 +128,8 @@ export async function requestPasswordReset(email: string): Promise<void> {
 
 export async function resendVerification(): Promise<void> {
   const { auth } = firebaseClient();
+  // After a full page load the persisted user is restored asynchronously.
+  await auth.authStateReady();
   if (!auth.currentUser) throw new AuthFlowError("Please log in again to resend the email.");
   await sendEmailVerification(auth.currentUser, { url: `${window.location.origin}/verify-email` });
 }
@@ -135,6 +137,7 @@ export async function resendVerification(): Promise<void> {
 /** Re-checks verification and, once verified, refreshes the session cookie claims. */
 export async function refreshVerifiedSession(): Promise<string | null> {
   const { auth } = firebaseClient();
+  await auth.authStateReady();
   const user = auth.currentUser;
   if (!user) throw new AuthFlowError("Please log in again.");
   await user.reload();

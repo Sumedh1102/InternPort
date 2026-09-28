@@ -1,6 +1,7 @@
 "use client";
 
 import * as React from "react";
+import { useRouter } from "next/navigation";
 import { Controller, useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import type { z } from "zod";
@@ -31,6 +32,7 @@ export function ProfileForm({
   mode: "onboarding" | "profile";
   onDone?: () => void;
 }) {
+  const router = useRouter();
   const schema = mode === "onboarding" ? onboardingSchema : profileSchema;
   const [error, setError] = React.useState<string | null>(null);
   const [photo, setPhoto] = React.useState<UploadedFile[]>([]);
@@ -73,7 +75,10 @@ export function ProfileForm({
       setPhoto([]);
       setResume([]);
       if (onDone) onDone();
-      else if (mode === "onboarding") window.location.assign("/dashboard");
+      else if (mode === "onboarding") {
+        router.push("/dashboard");
+        router.refresh();
+      }
     } else {
       setError(result.error);
       applyServerErrors(form, result);

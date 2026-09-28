@@ -5,6 +5,7 @@ import { StatusBadge } from "@/components/ui/badge";
 import { EmptyState } from "@/components/ui/feedback";
 import type { AttendanceRecord, Enrollment, Session } from "@/lib/domain/types";
 import { cn, formatDateTime } from "@/lib/utils";
+import { requestTime } from "@/lib/time";
 import { AttendanceMarker } from "./session-forms";
 
 /** Session picker + roster marker. Shared by the mentor and admin attendance pages. */
@@ -21,7 +22,7 @@ export function AttendancePanel({
   enrollments: Enrollment[];
   records: AttendanceRecord[];
 }) {
-  const now = Date.now();
+  const now = requestTime();
   const markable = sessions
     .filter((s) => s.status !== "CANCELLED" && new Date(s.startAt).getTime() <= now + 3600e3)
     .sort((a, b) => b.startAt.localeCompare(a.startAt));

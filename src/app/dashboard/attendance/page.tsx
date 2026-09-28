@@ -8,6 +8,7 @@ import { EmptyState, Stat } from "@/components/ui/feedback";
 import { ATTENDANCE_STATUSES, label } from "@/lib/domain/enums";
 import { attendancePercent } from "@/lib/domain/progress";
 import { formatDate, formatDateTime } from "@/lib/utils";
+import { requestTime } from "@/lib/time";
 import { requireRole } from "@/server/auth/session";
 import { getAttendanceForUser, getSessionsForBatches } from "@/server/queries/platform";
 import { getStudentContext } from "@/server/queries/student";
@@ -33,7 +34,7 @@ export default async function AttendancePage() {
   const mine = records.filter((r) => r.programId === e.programId);
   const pct = attendancePercent(mine.map((r) => r.status));
   const counts = Object.fromEntries(ATTENDANCE_STATUSES.map((s) => [s, mine.filter((r) => r.status === s).length]));
-  const now = Date.now();
+  const now = requestTime();
   const upcoming = sessions.filter((s) => s.status === "SCHEDULED" && new Date(s.startAt).getTime() + s.durationMinutes * 60e3 > now);
 
   return (

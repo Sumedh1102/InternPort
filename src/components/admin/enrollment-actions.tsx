@@ -15,7 +15,7 @@ import { Button } from "@/components/ui/button";
 import { Field, FormError } from "@/components/ui/field";
 import { Checkbox, Input, Select, Textarea } from "@/components/ui/input";
 import { toast } from "@/components/ui/toaster";
-import { ENROLLMENT_STATUSES, PAYMENT_METHODS, label } from "@/lib/domain/enums";
+import { PAYMENT_METHODS, label } from "@/lib/domain/enums";
 import { formatINR } from "@/lib/domain/pricing";
 import { enrollmentUpdateSchema, paymentUpdateSchema } from "@/lib/domain/schemas";
 import type { Enrollment } from "@/lib/domain/types";

@@ -4,6 +4,7 @@ import * as React from "react";
 import { X } from "lucide-react";
 
 import { cn } from "@/lib/utils";
+import { useFieldControl } from "./field";
 
 interface TagInputProps {
   id?: string;
@@ -14,18 +15,30 @@ interface TagInputProps {
   max?: number;
   "aria-invalid"?: boolean;
   "aria-describedby"?: string;
+  "aria-required"?: boolean;
+}
+
+/** Explicit props win; otherwise inherit the enclosing Field's label/aria wiring. */
+function useControlProps(own: { id?: string; "aria-invalid"?: boolean; "aria-describedby"?: string; "aria-required"?: boolean }) {
+  const field = useFieldControl();
+  return {
+    id: own.id ?? field?.id,
+    "aria-invalid": own["aria-invalid"] ?? field?.["aria-invalid"],
+    "aria-describedby": own["aria-describedby"] ?? field?.["aria-describedby"],
+    "aria-required": own["aria-required"] ?? field?.["aria-required"],
+  };
 }
 
 /** Chip input: Enter or comma adds, Backspace on empty removes the last chip. */
 export function TagInput({
-  id,
   value,
   onChange,
   placeholder = "Type and press Enter",
   suggestions = [],
   max = 20,
-  ...aria
+  ...own
 }: TagInputProps) {
+  const { id, ...aria } = useControlProps(own);
   const [draft, setDraft] = React.useState("");
 
   function add(raw: string) {
@@ -104,12 +117,11 @@ export function TagInput({
 
 /** Edits a string[] as one item per line. */
 export function LinesInput({
-  id,
   value,
   onChange,
   rows = 4,
   placeholder,
-  ...aria
+  ...own
 }: {
   id?: string;
   value: string[] | undefined;
@@ -118,7 +130,9 @@ export function LinesInput({
   placeholder?: string;
   "aria-invalid"?: boolean;
   "aria-describedby"?: string;
+  "aria-required"?: boolean;
 }) {
+  const { id, ...aria } = useControlProps(own);
   const [text, setText] = React.useState((value ?? []).join("\n"));
   return (
     <textarea

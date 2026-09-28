@@ -6,6 +6,7 @@ import { StatusBadge } from "@/components/ui/badge";
 import { buttonVariants } from "@/components/ui/button";
 import { EmptyState, Stat } from "@/components/ui/feedback";
 import { firstName, formatDate, formatDateTime, relativeTime } from "@/lib/utils";
+import { requestTime } from "@/lib/time";
 import { requireRole } from "@/server/auth/session";
 import { getSessionsForBatches, getUser, listSubmissions } from "@/server/queries/platform";
 import { getMentorContext } from "@/server/queries/mentor";
@@ -20,7 +21,7 @@ export default async function MentorOverview() {
     getSessionsForBatches(ctx.batchIds),
   ]);
   const toReview = submissions.filter((s) => s.status === "SUBMITTED" || s.status === "UNDER_REVIEW");
-  const now = Date.now();
+  const now = requestTime();
   const upcoming = sessions.filter((s) => s.status === "SCHEDULED" && new Date(s.startAt).getTime() > now - 3600e3).slice(0, 5);
   const needsAttendance = sessions.filter((s) => s.status === "SCHEDULED" && new Date(s.startAt).getTime() < now).length;
 

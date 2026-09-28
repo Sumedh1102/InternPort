@@ -23,6 +23,7 @@ import { EmptyState, Stat } from "@/components/ui/feedback";
 import type { Submission } from "@/lib/domain/types";
 import { SITE } from "@/lib/site";
 import { cn, firstName, formatDate, formatDateTime, relativeTime } from "@/lib/utils";
+import { requestTime } from "@/lib/time";
 import { requireRole } from "@/server/auth/session";
 import { eligibilityFor, metricsForEnrollment } from "@/server/metrics";
 import {
@@ -124,7 +125,7 @@ export default async function StudentOverview() {
   const ordered = orderLessons(courses, lessons);
   const done = new Set(e.completedLessonIds);
   const nextLesson = ordered.find((l) => !done.has(l.id));
-  const now = Date.now();
+  const now = requestTime();
   const upcoming = sessions
     .filter((s) => s.status === "SCHEDULED" && new Date(s.startAt).getTime() + s.durationMinutes * 60e3 > now)
     .slice(0, 3);

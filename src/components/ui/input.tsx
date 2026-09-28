@@ -43,7 +43,6 @@ export const Select = React.forwardRef<HTMLSelectElement, React.SelectHTMLAttrib
 Select.displayName = "Select";
 
 export function Label({ className, ...props }: React.LabelHTMLAttributes<HTMLLabelElement>) {
-  // eslint-disable-next-line jsx-a11y/label-has-associated-control
   return <label className={cn("text-sm font-semibold text-ink", className)} {...props} />;
 }
 

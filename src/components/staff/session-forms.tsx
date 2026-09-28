@@ -25,8 +25,10 @@ type Values = z.input<typeof sessionSchema>;
 function SessionForm({ session, batches, onDone }: { session?: Session; batches: Option[]; onDone: () => void }) {
   const router = useRouter();
   const [error, setError] = React.useState<string | null>(null);
-  const defaultStart = session?.startAt ?? new Date(Math.ceil(Date.now() / 3600e3) * 3600e3 + 86400e3).toISOString();
-  const [startLocal, setStartLocal] = React.useState(isoToLocal(defaultStart));
+  const [defaultStart] = React.useState(
+    () => session?.startAt ?? new Date(Math.ceil(Date.now() / 3600e3) * 3600e3 + 86400e3).toISOString(),
+  );
+  const [startLocal, setStartLocal] = React.useState(() => isoToLocal(defaultStart));
   const form = useForm<Values>({
     resolver: zodResolver(sessionSchema),
     defaultValues: {

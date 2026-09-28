@@ -9,6 +9,7 @@ import { buttonVariants } from "@/components/ui/button";
 import { DataTable } from "@/components/ui/data-table";
 import { SESSION_STATUSES, label } from "@/lib/domain/enums";
 import { formatDateTime } from "@/lib/utils";
+import { requestTime } from "@/lib/time";
 import { sendSessionReminder } from "@/server/actions/sessions";
 import { requireRole } from "@/server/auth/session";
 import { getSessionsForBatches } from "@/server/queries/platform";
@@ -21,7 +22,7 @@ export default async function MentorSessionsPage() {
   const ctx = await getMentorContext(session.uid);
   const sessions = (await getSessionsForBatches(ctx.batchIds)).reverse();
   const batches = ctx.batches.map((b) => ({ id: b.id, name: `${b.name} · ${b.programName}`, programId: b.programId }));
-  const now = Date.now();
+  const now = requestTime();
   return (
     <>
       <PageHeader title="Sessions" description="Schedule live classes, workshops and doubt sessions. Students are notified automatically." actions={<SessionFormDialog batches={batches} />} />

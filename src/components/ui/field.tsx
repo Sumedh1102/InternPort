@@ -1,3 +1,5 @@
+"use client";
+
 import * as React from "react";
 
 import { cn } from "@/lib/utils";
@@ -13,6 +15,23 @@ interface FieldProps {
   children: React.ReactElement<Record<string, unknown>>;
 }
 
+export interface FieldControlProps {
+  id: string;
+  "aria-invalid"?: boolean;
+  "aria-describedby"?: string;
+  "aria-required"?: boolean;
+}
+
+const FieldControlContext = React.createContext<FieldControlProps | null>(null);
+
+/**
+ * For composite controls rendered through a wrapper (e.g. RHF `<Controller>`), where
+ * Field can't pass its label/aria wiring to the input directly.
+ */
+export function useFieldControl(): FieldControlProps | null {
+  return React.useContext(FieldControlContext);
+}
+
 /**
  * Accessible form field: wires label ↔ control, hint + error via aria-describedby,
  * and marks the control invalid for assistive tech.
@@ -21,12 +40,13 @@ export function Field({ id, label, error, hint, required, className, children }:
   const hintId = hint ? `${id}-hint` : undefined;
   const errorId = error ? `${id}-error` : undefined;
   const describedBy = [hintId, errorId].filter(Boolean).join(" ") || undefined;
-  const control = React.cloneElement(children, {
+  const controlProps: FieldControlProps = {
     id,
     "aria-invalid": error ? true : undefined,
     "aria-describedby": describedBy,
     "aria-required": required || undefined,
-  });
+  };
+  const control = React.cloneElement(children, { ...controlProps });
   return (
     <div className={cn("flex min-w-0 flex-col gap-1.5", className)}>
       <Label htmlFor={id}>
@@ -37,7 +57,7 @@ export function Field({ id, label, error, hint, required, className, children }:
           </span>
         )}
       </Label>
-      {control}
+      <FieldControlContext.Provider value={controlProps}>{control}</FieldControlContext.Provider>
       {hint && !error && (
         <p id={hintId} className="text-xs text-muted">
           {hint}

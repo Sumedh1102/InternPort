@@ -9,6 +9,7 @@ import {
   label,
 } from "@/lib/domain/enums";
 import { attendancePercent, percent } from "@/lib/domain/progress";
+import { requestTime } from "@/lib/time";
 import { requireRole } from "@/server/auth/session";
 import { metricsForEnrollments } from "@/server/metrics";
 import {
@@ -61,7 +62,7 @@ export default async function AdminAnalyticsPage() {
 
   // Last 12 weeks of applications.
   const weeks: string[] = [];
-  const now = Date.now();
+  const now = requestTime();
   for (let i = 11; i >= 0; i--) weeks.push(weekKey(new Date(now - i * 7 * 86400e3).toISOString()));
   const perWeek = new Map(weeks.map((w) => [w, 0]));
   for (const a of applications) {

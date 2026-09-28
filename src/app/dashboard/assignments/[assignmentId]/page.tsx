@@ -8,6 +8,7 @@ import { StatusBadge } from "@/components/ui/badge";
 import { buttonVariants } from "@/components/ui/button";
 import { Alert } from "@/components/ui/feedback";
 import { formatBytes, formatDateTime, relativeTime } from "@/lib/utils";
+import { requestTime } from "@/lib/time";
 import { requireRole } from "@/server/auth/session";
 import { getAssignment, getSubmission, submissionId } from "@/server/queries/platform";
 import { getStudentContext } from "@/server/queries/student";
@@ -33,7 +34,7 @@ export default async function AssignmentDetailPage({ params }: PageProps<"/dashb
   const submission = await getSubmission(submissionId(assignment.id, session.uid));
   const status = submission?.status ?? "NOT_STARTED";
   const locked = status === "SUBMITTED" || status === "UNDER_REVIEW" || status === "APPROVED";
-  const overdue = new Date(assignment.dueDate).getTime() < Date.now();
+  const overdue = new Date(assignment.dueDate).getTime() < requestTime();
 
   return (
     <>

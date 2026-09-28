@@ -36,8 +36,10 @@ export function roleFromClaims(claims: Record<string, unknown>): Role {
  * so role changes and sign-outs take effect server-side. Memoised per request.
  */
 export const getSession = cache(async (): Promise<SessionUser | null> => {
-  if (!isAdminConfigured()) return null;
+  // Read cookies before anything else: it opts every caller into request-time
+  // rendering even when a build runs without Firebase credentials.
   const store = await cookies();
+  if (!isAdminConfigured()) return null;
   const cookie = store.get(SESSION_COOKIE)?.value;
   if (!cookie) return null;
   try {
