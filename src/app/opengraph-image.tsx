@@ -1,5 +1,6 @@
 import { ImageResponse } from "next/og";
 
+import { BRAND_COLORS, LOGO_LOCKUP, LOGO_MARK_PATH, LOGO_WORDMARK_PATH } from "@/lib/brand";
 import { SITE } from "@/lib/site";
 
 export const alt = `${SITE.name} — Learn today. Build tomorrow.`;
@@ -9,6 +10,7 @@ export const contentType = "image/png";
 export default function OpengraphImage() {
   const grid =
     "linear-gradient(to right, rgba(11,11,12,0.08) 1px, transparent 1px), linear-gradient(to bottom, rgba(11,11,12,0.08) 1px, transparent 1px)";
+  const logoHeight = 72;
   return new ImageResponse(
     (
       <div
@@ -27,26 +29,14 @@ export default function OpengraphImage() {
         }}
       >
         <div style={{ display: "flex", alignItems: "center", gap: 18 }}>
-          <div
-            style={{
-              width: 64,
-              height: 64,
-              borderRadius: 16,
-              border: "4px solid #0b0b0c",
-              background: "#c6ff34",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              fontSize: 40,
-              fontWeight: 900,
-            }}
+          <svg
+            width={(logoHeight * LOGO_LOCKUP.width) / LOGO_LOCKUP.height}
+            height={logoHeight}
+            viewBox={`0 0 ${LOGO_LOCKUP.width} ${LOGO_LOCKUP.height}`}
           >
-            S
-          </div>
-          <div style={{ display: "flex", flexDirection: "column" }}>
-            <span style={{ fontSize: 34, fontWeight: 900 }}>SAINAM</span>
-            <span style={{ fontSize: 16, letterSpacing: 6 }}>TECHNOLOGY</span>
-          </div>
+            <path d={LOGO_MARK_PATH} fill={BRAND_COLORS.teal} />
+            <path d={LOGO_WORDMARK_PATH} fill={BRAND_COLORS.slate} />
+          </svg>
           <div
             style={{
               marginLeft: "auto",

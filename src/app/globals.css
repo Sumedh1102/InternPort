@@ -29,6 +29,9 @@
   --color-red-soft: #ffe1dd;
   --color-green: #17a765;
   --color-green-soft: #d6f7e6;
+  /* Logo colours — keep in sync with BRAND_COLORS in src/lib/brand.ts */
+  --color-brand-teal: #009fa0;
+  --color-brand-slate: #263940;
 
   --font-display: var(--font-bricolage), ui-sans-serif, system-ui, sans-serif;
   --font-sans: var(--font-geist), ui-sans-serif, system-ui, sans-serif;

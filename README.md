@@ -173,3 +173,4 @@ firestore.rules  storage.rules  firestore.indexes.json
 - **Program curricula** in `scripts/seed-data/programs.ts` are a starting draft. Review them in **Admin → Programs**.
 - **Real data only.** The Team and Projects pages show only data that admins add or feature. The site has no invented testimonials, clients, statistics or placement claims.
 - **Technology badges** use monogram stickers rather than bundled third-party logos. `logoSrc` is an extension point if you have licensed logo assets.
+- **Sainam logo.** `src/lib/brand.ts` holds the logo as SVG paths plus its colours (teal `#009FA0`, slate `#263940`). `<Logo />`, the Apple touch icon, the Open Graph image and the certificate PDF all draw from it. `src/app/icon.svg` (favicon) and `public/brand/*.svg` are standalone copies, so update them too if the paths change. The paths were vectorised from the supplied raster logo; if the original vector artwork turns up, replace them with it.

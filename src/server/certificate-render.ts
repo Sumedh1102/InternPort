@@ -3,6 +3,7 @@ import "server-only";
 import QRCode from "qrcode";
 import { PDFDocument, StandardFonts, rgb, type PDFFont, type PDFPage } from "pdf-lib";
 
+import { BRAND_COLORS, LOGO_LOCKUP, LOGO_MARK_PATH, LOGO_WORDMARK_PATH } from "@/lib/brand";
 import type { Certificate, PlatformSettings } from "@/lib/domain/types";
 import { SITE } from "@/lib/site";
 import { formatDate } from "@/lib/utils";
@@ -20,11 +21,19 @@ export async function certificateQrSvg(cert: Certificate): Promise<string> {
   });
 }
 
+function hex(color: string) {
+  const n = parseInt(color.slice(1), 16);
+  return rgb(((n >> 16) & 255) / 255, ((n >> 8) & 255) / 255, (n & 255) / 255);
+}
+
 const INK = rgb(0.043, 0.043, 0.047);
 const CREAM = rgb(0.98, 0.965, 0.925);
+const PAPER = rgb(1, 0.992, 0.969);
 const LIME = rgb(0.776, 1, 0.204);
 const PINK = rgb(1, 0.239, 0.604);
 const MUTED = rgb(0.34, 0.325, 0.294);
+const TEAL = hex(BRAND_COLORS.teal);
+const SLATE = hex(BRAND_COLORS.slate);
 
 function centered(page: PDFPage, text: string, y: number, font: PDFFont, size: number, color = INK) {
   const width = font.widthOfTextAtSize(text, size);
@@ -57,14 +66,16 @@ export async function renderCertificatePdf(cert: Certificate, settings: Platform
   // Frame
   page.drawRectangle({ x: 0, y: 0, width, height, color: CREAM });
   page.drawRectangle({ x: 34, y: 26, width: width - 60, height: height - 60, color: INK });
-  page.drawRectangle({ x: 26, y: 34, width: width - 60, height: height - 60, color: rgb(1, 0.992, 0.969), borderColor: INK, borderWidth: 3 });
-  page.drawRectangle({ x: 26, y: height - 110, width: width - 60, height: 84, color: LIME, borderColor: INK, borderWidth: 3 });
+  page.drawRectangle({ x: 26, y: 34, width: width - 60, height: height - 60, color: PAPER, borderColor: INK, borderWidth: 3 });
+  page.drawRectangle({ x: 26, y: height - 110, width: width - 60, height: 84, color: PAPER, borderColor: INK, borderWidth: 3 });
+  page.drawRectangle({ x: 27.5, y: height - 108.5, width: width - 63, height: 8, color: LIME });
 
-  // Header
-  page.drawText("SAINAM", { x: 56, y: height - 70, size: 26, font: bold, color: INK });
-  page.drawText("TECHNOLOGY", { x: 57, y: height - 88, size: 9, font: mono, color: INK });
+  // Header: logo on paper (its colours need a light background)
+  const logoScale = 48 / LOGO_LOCKUP.height;
+  page.drawSvgPath(LOGO_MARK_PATH, { x: 52, y: height - 40, scale: logoScale, color: TEAL });
+  page.drawSvgPath(LOGO_WORDMARK_PATH, { x: 52, y: height - 40, scale: logoScale, color: SLATE });
   const tag = "CERTIFICATE OF COMPLETION";
-  page.drawText(tag, { x: width - 56 - bold.widthOfTextAtSize(tag, 14), y: height - 78, size: 14, font: bold, color: INK });
+  page.drawText(tag, { x: width - 56 - bold.widthOfTextAtSize(tag, 14), y: height - 74, size: 14, font: bold, color: INK });
 
   // Body
   centered(page, "This certifies that", height - 170, regular, 14, MUTED);
