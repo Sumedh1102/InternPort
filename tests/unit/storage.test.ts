@@ -38,6 +38,7 @@ describe("storage paths", () => {
     });
     expect(folder("internship-documents/assignments/asg1/").area).toBe("assignment");
     expect(folder("internship-documents/programs/prog1/resources/").area).toBe("resource");
+    expect(folder("internship-documents/settings/payment-qr/")).toEqual({ area: "paymentQr" });
   });
 
   it("rejects unknown buckets, traversal and unsafe names", () => {
@@ -105,6 +106,15 @@ describe("storage access", () => {
     expect(canWriteStorage(mentor, folder("internship-documents/assignments/asg1/"))).toBe(true);
     expect(canWriteStorage(mentor, folder("internship-documents/programs/prog1/resources/"))).toBe(false);
     expect(canWriteStorage(admin, folder("internship-documents/programs/prog1/resources/"))).toBe(true);
+  });
+
+  it("only admins upload payment QR codes; any signed-in user can read them", () => {
+    const qr = folder("internship-documents/settings/payment-qr/");
+    expect(canWriteStorage(student, qr)).toBe(false);
+    expect(canWriteStorage(mentor, qr)).toBe(false);
+    expect(canWriteStorage(admin, qr)).toBe(true);
+    expect(canReadStorage(student, qr)).toBe(true);
+    expect(canReadStorage(null, qr)).toBe(false);
   });
 
   it("keeps private files private", () => {

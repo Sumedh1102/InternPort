@@ -16,6 +16,17 @@ export const DEFAULT_SETTINGS: PlatformSettings = {
       "Sainam Technology will share the payment details with you directly after your application is approved. " +
       "Once you have paid, submit your transaction reference here so our team can verify it manually. " +
       "Never share card numbers, CVV, OTPs or banking passwords with anyone.",
+    // Shipped in public/ so it works before an admin uploads one; replace or remove it in Admin → Settings.
+    qrCodes: {
+      REGULAR: {
+        name: "regular-1799.png",
+        path: "/payment-qr/regular-1799.png",
+        url: "/payment-qr/regular-1799.png",
+        size: 9112,
+        contentType: "image/png",
+        amount: 1799,
+      },
+    },
   },
   contact: {},
   certificate: { ...DEFAULT_CERTIFICATE_CRITERIA },
@@ -28,7 +39,11 @@ export function mergeSettings(raw: Partial<PlatformSettings> | null | undefined)
     ...DEFAULT_SETTINGS,
     ...r,
     earlyBird: { ...DEFAULT_SETTINGS.earlyBird, ...r.earlyBird },
-    payment: { ...DEFAULT_SETTINGS.payment, ...r.payment },
+    payment: {
+      ...DEFAULT_SETTINGS.payment,
+      ...r.payment,
+      qrCodes: { ...DEFAULT_SETTINGS.payment.qrCodes, ...r.payment?.qrCodes },
+    },
     contact: { ...DEFAULT_SETTINGS.contact, ...r.contact },
     certificate: { ...DEFAULT_SETTINGS.certificate, ...r.certificate },
     ai: { ...DEFAULT_SETTINGS.ai, ...r.ai },

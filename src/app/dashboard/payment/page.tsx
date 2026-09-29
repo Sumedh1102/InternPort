@@ -124,6 +124,26 @@ export default async function PaymentPage() {
                   />
                 </div>
               )}
+              {instructions.qrCode && (
+                <figure className="mt-4 flex flex-col items-center gap-2 rounded-2xl border-2 border-ink bg-paper p-4 sm:flex-row sm:items-center sm:gap-5">
+                  {/* eslint-disable-next-line @next/next/no-img-element -- uploads are served through /api/files */}
+                  <img
+                    src={instructions.qrCode.url}
+                    alt={
+                      instructions.qrCode.amount
+                        ? `Payment QR code for ${formatINR(instructions.qrCode.amount)}`
+                        : "Payment QR code"
+                    }
+                    className="size-48 shrink-0 rounded-xl border-2 border-ink bg-white p-1"
+                  />
+                  <figcaption className="text-center text-sm sm:text-left">
+                    <strong className="block font-display text-lg">
+                      {instructions.qrCode.amount ? `Scan to pay ${formatINR(instructions.qrCode.amount)}` : "Scan to pay"}
+                    </strong>
+                    {label(p.pricingTier)} pricing. After paying, submit your transaction reference below.
+                  </figcaption>
+                </figure>
+              )}
               <p className="mt-4 text-sm">
                 Amount due: <strong className="font-display text-lg">{formatINR(p.totalAmount)}</strong> ({formatINR(p.monthlyFee)} × {p.months}{" "}
                 month{p.months > 1 ? "s" : ""}, {label(p.pricingTier).toLowerCase()} pricing)

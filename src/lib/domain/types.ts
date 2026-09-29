@@ -514,6 +514,11 @@ export interface CertificateCriteria {
   requireProjectCompleted: boolean;
 }
 
+/** A payment QR code shown to students on one pricing tier. `amount` is the ₹ it charges, for the caption. */
+export interface PaymentQrCode extends StoredFile {
+  amount?: number | null;
+}
+
 export interface PlatformSettings {
   applicationsOpen: boolean;
   earlyBird: {
@@ -528,6 +533,8 @@ export interface PlatformSettings {
     upiId?: string;
     bankDetails?: string;
     supportContact?: string;
+    /** Keyed by pricing tier; `null` means the admin removed that tier's QR code. */
+    qrCodes?: Partial<Record<PricingTier, PaymentQrCode | null>>;
   };
   contact: {
     email?: string;

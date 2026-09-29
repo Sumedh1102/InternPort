@@ -3,7 +3,7 @@
 import { revalidatePath, revalidateTag } from "next/cache";
 import { z } from "zod";
 
-import { ADMIN_ROLES, PROGRAM_STATUSES, type Role } from "@/lib/domain/enums";
+import { ADMIN_ROLES, PRICING_TIERS, PROGRAM_STATUSES, type PricingTier, type Role } from "@/lib/domain/enums";
 import {
   batchSchema,
   docId,
@@ -12,11 +12,13 @@ import {
   settingsSchema,
   teamMemberSchema,
 } from "@/lib/domain/schemas";
-import type { ActionResult, Batch, Program, UserProfile } from "@/lib/domain/types";
+import type { ActionResult, Batch, PaymentQrCode, Program, UserProfile } from "@/lib/domain/types";
 import { canAssignRole } from "@/lib/domain/workflows";
 import { COL, SETTINGS_DOC, col, countOf, fromSnap, queryDocs, serverNow, toTimestamp } from "../db";
 import { adminAuth, adminDb } from "../firebase-admin";
 import { roleFromClaims } from "../auth/session";
+import { getSettings } from "../queries/settings";
+import { UPLOAD_POLICIES, verifyUploadedFile } from "../storage";
 import { ActionError, actor, parse, run } from "./_utils";
 
 function revalidatePrograms(slug?: string) {
@@ -215,10 +217,21 @@ export async function setUserDisabled(uid: string, disabled: boolean): Promise<A
 
 /* ------------------------------ Settings ----------------------------- */
 
+const PAYMENT_QR_FOLDER = "internship-documents/settings/payment-qr/";
+
 export async function saveSettings(input: unknown): Promise<ActionResult> {
   return run(async () => {
     await actor(ADMIN_ROLES);
     const data = parse(settingsSchema, input);
+    // A saved QR (including the default one in public/) is kept as is; a new upload is re-checked.
+    const saved = (await getSettings()).payment.qrCodes ?? {};
+    const existing = PRICING_TIERS.flatMap((t) => saved[t] ?? []);
+    const qrCodes = {} as Record<PricingTier, PaymentQrCode | null>;
+    for (const tier of PRICING_TIERS) {
+      const { path, amount } = data.payment.qrCodes[tier];
+      const file = path ? await verifyUploadedFile(path, PAYMENT_QR_FOLDER, UPLOAD_POLICIES.paymentQr, existing) : null;
+      qrCodes[tier] = file ? { ...file, amount: amount ?? null } : null;
+    }
     // `claimed` is only ever changed transactionally by approvals — never from this form.
     await col(COL.settings)
       .doc(SETTINGS_DOC)
@@ -230,7 +243,7 @@ export async function saveSettings(input: unknown): Promise<ActionResult> {
             limit: data.earlyBird.limit,
             showRemaining: data.earlyBird.showRemaining,
           },
-          payment: data.payment,
+          payment: { ...data.payment, qrCodes },
           contact: data.contact,
           certificate: data.certificate,
           ai: data.ai,

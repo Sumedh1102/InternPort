@@ -2,7 +2,7 @@
 
 import * as React from "react";
 import { useRouter } from "next/navigation";
-import { Controller, useForm } from "react-hook-form";
+import { Controller, useForm, type Control, type UseFormRegister } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Pencil, UserPlus } from "lucide-react";
 import type { z } from "zod";
@@ -10,15 +10,87 @@ import type { z } from "zod";
 import { applyServerErrors, errorAt } from "@/components/forms/form-utils";
 import { FormDialog } from "@/components/staff/form-dialog";
 import { Button } from "@/components/ui/button";
+import { FileUploader, type UploadedFile } from "@/components/ui/file-uploader";
 import { Field, FormError, FormSection } from "@/components/ui/field";
 import { Checkbox, Input, Textarea } from "@/components/ui/input";
 import { SwitchField } from "@/components/ui/switch";
 import { toast } from "@/components/ui/toaster";
+import { PRICING_TIERS, label, type PricingTier } from "@/lib/domain/enums";
 import { settingsSchema, teamMemberSchema } from "@/lib/domain/schemas";
-import type { PlatformSettings, TeamMember } from "@/lib/domain/types";
+import { storageFileUrl, UPLOAD_POLICIES } from "@/lib/domain/storage";
+import type { PaymentQrCode, PlatformSettings, TeamMember } from "@/lib/domain/types";
 import { saveSettings, saveTeamMember } from "@/server/actions/admin";
 
 type SettingsValues = z.input<typeof settingsSchema>;
+
+function qrDefaults(qr: PaymentQrCode | null | undefined) {
+  return { path: qr?.path ?? "", amount: qr?.amount ?? undefined };
+}
+
+/** Upload slot and amount for one pricing tier's payment QR code. */
+function PaymentQrField({
+  tier,
+  saved,
+  control,
+  register,
+  error,
+}: {
+  tier: PricingTier;
+  saved: PaymentQrCode | null | undefined;
+  control: Control<SettingsValues>;
+  register: UseFormRegister<SettingsValues>;
+  error: (path: string) => string | undefined;
+}) {
+  const id = `st-qr-${tier.toLowerCase()}`;
+  return (
+    <div className="flex flex-col gap-3 rounded-2xl border-2 border-ink/20 p-4">
+      <p className="font-display font-extrabold">{label(tier)} QR code</p>
+      <Controller
+        control={control}
+        name={`payment.qrCodes.${tier}.path`}
+        render={({ field }) => {
+          const path = field.value ?? "";
+          const isSaved = Boolean(saved && path === saved.path);
+          const value: UploadedFile[] = !path
+            ? []
+            : isSaved && saved
+              ? [{ path, name: saved.name, size: saved.size, contentType: saved.contentType, url: saved.url }]
+              : [{ path, name: path.split("/").pop() ?? "QR code", size: 0, contentType: "" }];
+          return (
+            <div className="flex items-start gap-4">
+              {path && (
+                // eslint-disable-next-line @next/next/no-img-element -- uploads are served through /api/files
+                <img
+                  src={isSaved && saved ? saved.url : storageFileUrl(path)}
+                  alt={`${label(tier)} payment QR code`}
+                  className="size-24 shrink-0 rounded-xl border-2 border-ink bg-white p-1"
+                />
+              )}
+              <div className="min-w-0 flex-1">
+                <FileUploader
+                  id={id}
+                  label="Upload QR code image"
+                  pathPrefix="internship-documents/settings/payment-qr/"
+                  accept={UPLOAD_POLICIES.paymentQr.types}
+                  maxBytes={UPLOAD_POLICIES.paymentQr.maxBytes}
+                  value={value}
+                  onChange={(files) => field.onChange(files[0]?.path ?? "")}
+                />
+              </div>
+            </div>
+          );
+        }}
+      />
+      <Field id={`${id}-amount`} label="Amount (₹)" hint="Shown as “Scan to pay ₹…”" error={error(`payment.qrCodes.${tier}.amount`)}>
+        <Input
+          type="number"
+          min={1}
+          {...register(`payment.qrCodes.${tier}.amount`, { setValueAs: (v) => (v === "" || v == null ? undefined : Number(v)) })}
+        />
+      </Field>
+    </div>
+  );
+}
 
 export function SettingsForm({ settings, aiConfigured }: { settings: PlatformSettings; aiConfigured: boolean }) {
   const router = useRouter();
@@ -34,6 +106,10 @@ export function SettingsForm({ settings, aiConfigured }: { settings: PlatformSet
         upiId: settings.payment.upiId ?? "",
         bankDetails: settings.payment.bankDetails ?? "",
         supportContact: settings.payment.supportContact ?? "",
+        qrCodes: {
+          EARLY_BIRD: qrDefaults(settings.payment.qrCodes?.EARLY_BIRD),
+          REGULAR: qrDefaults(settings.payment.qrCodes?.REGULAR),
+        },
       },
       contact: {
         email: settings.contact.email ?? "",
@@ -109,6 +185,12 @@ export function SettingsForm({ settings, aiConfigured }: { settings: PlatformSet
         <Field id="st-paycontact" label="Payment support contact" error={e("payment.supportContact")} className="sm:col-span-2">
           <Input {...register("payment.supportContact")} />
         </Field>
+        <p className="text-sm text-muted sm:col-span-2">
+          Payment QR codes: each student sees the one for their pricing tier. PNG, JPEG or WebP up to 2 MB.
+        </p>
+        {PRICING_TIERS.map((tier) => (
+          <PaymentQrField key={tier} tier={tier} saved={settings.payment.qrCodes?.[tier]} control={control} register={register} error={e} />
+        ))}
       </FormSection>
 
       <FormSection title="Public contact details" step="3" description="Shown on the Contact page, footer and student support page.">

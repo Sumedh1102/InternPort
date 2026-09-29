@@ -549,6 +549,12 @@ export const teamMemberSchema = z.object({
 });
 export type TeamMemberInput = z.infer<typeof teamMemberSchema>;
 
+/** One tier's payment QR in the settings form: an uploaded (or already saved) image path and its amount. */
+const paymentQrSchema = z.object({
+  path: z.union([z.literal(""), z.string().max(400)]).optional(),
+  amount: z.number().int().min(1, "Enter the amount in ₹").max(1_000_000).optional(),
+});
+
 export const settingsSchema = z.object({
   applicationsOpen: z.boolean(),
   earlyBird: z.object({
@@ -562,6 +568,7 @@ export const settingsSchema = z.object({
     upiId: optionalText(120),
     bankDetails: optionalText(1000),
     supportContact: optionalText(200),
+    qrCodes: z.object({ EARLY_BIRD: paymentQrSchema, REGULAR: paymentQrSchema }),
   }),
   contact: z.object({
     email: z.union([z.literal(""), z.email()]).optional(),

@@ -38,6 +38,7 @@ export const UPLOAD_POLICIES = {
     ],
   },
   screenshot: { maxBytes: 5 * 1024 * 1024, types: IMAGE_TYPES },
+  paymentQr: { maxBytes: 2 * 1024 * 1024, types: IMAGE_TYPES },
   staffFile: {
     maxBytes: 20 * 1024 * 1024,
     types: [
@@ -60,7 +61,12 @@ export interface UploadPolicy {
 
 export type UploadKind = keyof typeof UPLOAD_POLICIES;
 
-const DOCUMENT_POLICIES = [UPLOAD_POLICIES.submission, UPLOAD_POLICIES.screenshot, UPLOAD_POLICIES.staffFile];
+const DOCUMENT_POLICIES = [
+  UPLOAD_POLICIES.submission,
+  UPLOAD_POLICIES.screenshot,
+  UPLOAD_POLICIES.paymentQr,
+  UPLOAD_POLICIES.staffFile,
+];
 
 /** Limits Supabase enforces per bucket, as a backstop to the per-folder policies. */
 export const BUCKET_LIMITS: Record<Bucket, UploadPolicy> = {
@@ -79,7 +85,8 @@ export type StorageFolder =
   | { area: "project"; uid: string; projectId: string }
   | { area: "submission"; submissionId: string }
   | { area: "assignment"; assignmentId: string }
-  | { area: "resource"; programId: string };
+  | { area: "resource"; programId: string }
+  | { area: "paymentQr" };
 
 export const FOLDER_KIND: Record<StorageFolder["area"], UploadKind> = {
   profile: "profileImage",
@@ -88,6 +95,7 @@ export const FOLDER_KIND: Record<StorageFolder["area"], UploadKind> = {
   submission: "submission",
   assignment: "staffFile",
   resource: "staffFile",
+  paymentQr: "paymentQr",
 };
 
 const ID = "([A-Za-z0-9_-]{1,128})";
@@ -110,6 +118,7 @@ const FOLDERS: { pattern: RegExp; build: (m: string[]) => StorageFolder }[] = [
     pattern: new RegExp(`^internship-documents/programs/${ID}/resources/$`),
     build: (m) => ({ area: "resource", programId: m[1] }),
   },
+  { pattern: /^internship-documents\/settings\/payment-qr\/$/, build: () => ({ area: "paymentQr" }) },
 ];
 
 const FILE_NAME = /^[A-Za-z0-9._-]{1,120}$/;
@@ -183,6 +192,7 @@ export function canWriteStorage(actor: StorageActor, folder: StorageFolder): boo
     case "assignment":
       return STAFF_ROLES.includes(actor.role);
     case "resource":
+    case "paymentQr":
       return ADMIN_ROLES.includes(actor.role);
   }
 }
@@ -203,6 +213,7 @@ export function canReadStorage(actor: StorageActor | null, folder: StorageFolder
       return staff || ownsSubmission(actor, folder.submissionId);
     case "assignment":
     case "resource":
+    case "paymentQr":
       return true;
   }
 }

@@ -65,7 +65,7 @@ In the emulator, verification and password-reset emails are not sent. Their link
    ```
    Log out and back in. After that, manage roles from **Admin → Students → Accounts**. (`SUPER_ADMIN_EMAILS` can bootstrap this instead, but the script is preferred.)
 6. In **Admin → Settings**, fill in:
-   - the payment instructions: UPI ID, bank-transfer details and the QR image URL;
+   - the payment instructions: UPI ID, bank-transfer details and a payment QR code for each pricing tier (the regular-tier ₹1,799 QR ships as the default in `public/payment-qr/`);
    - contact details and the early-bird seat limit;
    - team members.
 
@@ -107,6 +107,7 @@ Supabase's storage policies can't identify Firebase users, so every bucket is **
 | | `submissions/{assignmentId}_{uid}/` | 10 MB | the student | the student and staff |
 | | `assignments/{assignmentId}/` | 20 MB | mentors and admins | any signed-in user |
 | | `programs/{programId}/resources/` | 20 MB | admins | any signed-in user |
+| | `settings/payment-qr/` | 2 MB images | admins | any signed-in user |
 
 The rules are in `src/lib/domain/storage.ts`. The bucket limits (20 MB for `internship-documents`) are a backstop. Each folder's own limit is enforced by the server.
 

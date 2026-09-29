@@ -1,7 +1,7 @@
 import "server-only";
 
 import type { PaymentProviderId, PaymentStatus } from "@/lib/domain/enums";
-import type { Enrollment, PlatformSettings } from "@/lib/domain/types";
+import type { Enrollment, PaymentQrCode, PlatformSettings } from "@/lib/domain/types";
 
 /**
  * Payment provider seam.
@@ -21,6 +21,8 @@ export interface PaymentInstructions {
   upiId?: string;
   bankDetails?: string;
   supportContact?: string;
+  /** QR code for the student's pricing tier. */
+  qrCode?: PaymentQrCode;
   checkoutUrl?: string;
 }
 
@@ -39,7 +41,7 @@ export const manualProvider: PaymentProvider = {
   label: "Manual verification",
   supportsSelfReport: true,
   manualStatuses: ["PAYMENT_PENDING", "PAYMENT_IN_REVIEW", "PAYMENT_CONFIRMED", "PAYMENT_REJECTED"],
-  instructions(_enrollment, settings) {
+  instructions(enrollment, settings) {
     return {
       kind: "manual",
       heading: "How to complete your payment",
@@ -48,6 +50,7 @@ export const manualProvider: PaymentProvider = {
       upiId: settings.payment.upiId,
       bankDetails: settings.payment.bankDetails,
       supportContact: settings.payment.supportContact,
+      qrCode: settings.payment.qrCodes?.[enrollment.payment.pricingTier] ?? undefined,
     };
   },
 };
