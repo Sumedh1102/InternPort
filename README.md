@@ -23,7 +23,7 @@ Built for the **Winter Internship 2026** (3 months, 7 domains).
 
 The Firebase Emulator Suite runs Auth and Firestore locally with demo data. File uploads need Supabase Storage (see [File storage](#file-storage-supabase)); without it the rest of the app works and uploads show an error.
 
-Requirements: Node.js 20.9 or newer, and Java 11 or newer for the Firestore emulator.
+Requirements: Node.js 24, the version production runs (22.12 or newer also works, though npm warns about the `engines` field), and Java 11 or newer for the Firestore emulator.
 
 ```bash
 npm install
@@ -73,7 +73,7 @@ In the emulator, verification and password-reset emails are not sent. Their link
 
 | Variable | Scope | Purpose |
 | --- | --- | --- |
-| `NEXT_PUBLIC_SITE_URL` | public | Canonical site URL |
+| `NEXT_PUBLIC_SITE_URL` | public | Canonical site URL (on Vercel, defaults to the production domain) |
 | `NEXT_PUBLIC_FIREBASE_*` | public | Firebase web config |
 | `NEXT_PUBLIC_USE_FIREBASE_EMULATORS` | public | Connect the browser SDK to the local emulators |
 | `FIREBASE_ADMIN_PROJECT_ID` / `_CLIENT_EMAIL` / `_PRIVATE_KEY` | **server** | Admin SDK service account |
@@ -85,7 +85,7 @@ In the emulator, verification and password-reset emails are not sent. Their link
 | `AI_PROVIDER` | **server** | `anthropic`, `gemini`, `mock` or `none` |
 | `ANTHROPIC_API_KEY`, `ANTHROPIC_MODEL` | **server** | Anthropic provider (default model `claude-opus-5`) |
 | `GEMINI_API_KEY`, `GEMINI_MODEL` | **server** | Gemini provider (default model `gemini-2.5-flash`) |
-| `CRON_SECRET` | **server** | Bearer token for `/api/cron/session-reminders` |
+| `CRON_SECRET` | **server** | Bearer token for `/api/cron/session-reminders` (Vercel Cron sends it automatically) |
 
 `NEXT_PUBLIC_*` values are inlined at build time, so set them before running `next build`.
 
@@ -133,18 +133,37 @@ The script never deletes or changes Firebase files. It updates a record only aft
 
 ## Deployment
 
-The app is a standard Next.js server app. It needs a Node runtime; it cannot be a static export.
+The app is a standard Next.js server app. It needs a Node runtime; it cannot be a static export. Production runs on **Vercel**. Firebase (Auth, Firestore) and Supabase (Storage) stay where they are.
 
-- **Firebase App Hosting** or **Cloud Run**: set `FIREBASE_ADMIN_USE_ADC=true` and the `NEXT_PUBLIC_*` variables. The session cookie is named `__session` so Firebase Hosting forwards it.
-- **Vercel** or any other Node host: provide the service-account variables.
+### Vercel
 
-Schedule the session-reminder job to run hourly:
+1. In Vercel, choose **Add New → Project** and import this GitHub repository. Vercel detects Next.js, so no build settings need changing.
+2. Under **Settings → Build and Deployment**, set **Node.js Version** to **24.x**. `package.json` already pins `24.x`, and keeping the setting the same avoids a build that stops with *Found invalid or discontinued Node.js Version*. Firebase Admin needs Node 22.12 or newer; on older versions, every page that checks the sign-in fails with `ERR_REQUIRE_ESM`.
+3. Under **Settings → Environment Variables**, add these for **Production**:
+
+   | Variable | Where it comes from |
+   | --- | --- |
+   | `NEXT_PUBLIC_FIREBASE_*` (6 values) | Firebase console → Project settings → Your apps → Web app |
+   | `FIREBASE_ADMIN_PROJECT_ID`, `FIREBASE_ADMIN_CLIENT_EMAIL`, `FIREBASE_ADMIN_PRIVATE_KEY` | Firebase console → Project settings → Service accounts → *Generate new private key*. Paste the private key as it is. |
+   | `NEXT_PUBLIC_SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY` | Supabase project settings (see [File storage](#file-storage-supabase)) |
+   | `CRON_SECRET` | Any long random string. Vercel sends it to the reminder job automatically. |
+   | `NEXT_PUBLIC_SITE_URL` | Your public URL, for example your custom domain. If unset, the Vercel production domain is used. |
+   | `AI_PROVIDER` and its key, `SUPER_ADMIN_EMAILS` | Optional; see [Environment variables](#environment-variables) |
+
+   Mark the server-only values as *Sensitive*. `NEXT_PUBLIC_*` values are built into the app, so redeploy after changing one. Give **Preview** deployments these values only if previews may use your live data.
+4. Deploy. From then on, every push to `main` deploys to production.
+5. In the Firebase console, open **Authentication → Settings → Authorized domains** and add your Vercel domain and any custom domain. Google sign-in and the links in verification and password-reset emails only work on listed domains.
+6. Under **Settings → Functions**, set the function region nearest your Firestore database. The default is Washington, D.C. (`iad1`). For Firestore in `asia-south1`, use Mumbai (`bom1`). The dashboards read Firestore on every request, so this has a big effect on their speed.
+
+**Session reminders.** `vercel.json` runs `/api/cron/session-reminders` every morning around 08:00 IST. Each run reminds students about sessions starting in the next 25 hours, once per session. Vercel's Hobby plan allows one run a day. On Pro, you can change the schedule to hourly (`0 * * * *`), so sessions added during the day are also reminded. Hobby is for non-commercial use only.
+
+### Other hosts
+
+On **Firebase App Hosting** or **Cloud Run**, set `FIREBASE_ADMIN_USE_ADC=true` instead of the service-account variables. The session cookie is named `__session` so that Firebase Hosting forwards it. Call the reminder job at least daily, for example from Cloud Scheduler:
 
 ```bash
 curl -H "Authorization: Bearer $CRON_SECRET" https://your-domain/api/cron/session-reminders
 ```
-
-It notifies students about sessions starting in the next 24 hours, once per session.
 
 ## How the platform works
 

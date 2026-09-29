@@ -6,7 +6,13 @@
 export const SITE = {
   name: "Sainam Technology",
   shortName: "Sainam",
-  url: (process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000").replace(/\/$/, ""),
+  // On Vercel, falls back to the project's production domain if NEXT_PUBLIC_SITE_URL isn't set.
+  url: (
+    process.env.NEXT_PUBLIC_SITE_URL ??
+    (process.env.NEXT_PUBLIC_VERCEL_PROJECT_PRODUCTION_URL
+      ? `https://${process.env.NEXT_PUBLIC_VERCEL_PROJECT_PRODUCTION_URL}`
+      : "http://localhost:3000")
+  ).replace(/\/$/, ""),
   description:
     "Sainam Technology builds software, AI/ML, web, mobile and cloud solutions — and runs hands-on technology internships. Winter Internship 2026 applications are open.",
   program: "Winter Internship 2026",

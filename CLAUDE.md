@@ -21,6 +21,7 @@ npm run storage:migrate                           # dry run; add `-- --apply` to
 
 - **Type checking:** use `npm run typecheck`, not bare `tsc`. The global `PageProps` / `RouteContext` types only exist after `next typegen`.
 - **Emulators and scripts:** the emulators need Java 11+. `seed`, `seed:demo` and `set-role` act on whatever project `.env.local` points to, so they only reach the emulators after `cp .env.emulator .env.local`. `--demo` refuses to run against a real project.
+- **Node version:** production runs Node 24.x, pinned by `engines` in `package.json`; the minimum is 22.12. `firebase-admin` 14 requires Node 22, and its `jwks-rsa` dependency `require()`s the ES-module-only `jose`, which older Node versions reject. There, every route that imports `src/server/firebase-admin.ts` fails to load with `ERR_REQUIRE_ESM`, while static pages keep working.
 - **E2E:** `tests/e2e/internship-journey.spec.ts` is one serial journey whose tests share state, so run the whole file. Each run registers a new student, so it can be re-run on the same seeded emulators.
 - **E2E dev server:** Playwright reuses any server already on `E2E_PORT` (default 3000). If there is none, it launches `node --env-file=.env.emulator … next dev`, which fails on Node 20–22 with `--env-file= is not allowed in NODE_OPTIONS` (`next dev` copies its exec flags into the child's `NODE_OPTIONS`). Start `npm run dev` with the emulator `.env.local` first.
 - **Email verification:** the Auth emulator sends no emails. To verify an account, GET `http://127.0.0.1:9099/emulator/v1/projects/demo-sainam/oobCodes` and open the matching `oobLink`, as the E2E suite does.
@@ -85,7 +86,7 @@ Everything under `src/server` imports `server-only`, which throws outside Next.j
 
 ### Route handlers and AI
 
-- **Route handlers:** `src/app/api/*` holds only what Server Actions can't do: the session cookie exchange, streamed AI replies, certificate PDFs, the applications CSV export, file access redirects (`/api/files`) and the session-reminder cron, which requires a `CRON_SECRET` bearer token. POST handlers check `isSameOrigin()` (`src/server/security.ts`).
+- **Route handlers:** `src/app/api/*` holds only what Server Actions can't do: the session cookie exchange, streamed AI replies, certificate PDFs, the applications CSV export, file access redirects (`/api/files`) and the session-reminder cron. The cron requires a `CRON_SECRET` bearer token, and Vercel Cron calls it daily (`vercel.json`). POST handlers check `isSameOrigin()` (`src/server/security.ts`).
 - **AI:** `getAIProvider()` (`src/server/ai`) picks anthropic, gemini or mock from `AI_PROVIDER`. It returns `null`, turning AI off, for `none` or a missing key. `/api/ai/assistant` enforces a per-user daily quota and builds its prompt from the student's enrollment (`src/server/ai/context.ts`).
 
 ## Conventions
