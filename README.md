@@ -23,7 +23,7 @@ Built for the **Winter Internship 2026** (3 months, 7 domains).
 
 The Firebase Emulator Suite runs Auth and Firestore locally with demo data. File uploads need Supabase Storage (see [File storage](#file-storage-supabase)); without it the rest of the app works and uploads show an error.
 
-Requirements: Node.js 20.9 or newer, and Java 11 or newer for the Firestore emulator.
+Requirements: Node.js 24, the version production runs (22.12 or newer also works, though npm warns about the `engines` field), and Java 11 or newer for the Firestore emulator.
 
 ```bash
 npm install
@@ -138,7 +138,8 @@ The app is a standard Next.js server app. It needs a Node runtime; it cannot be 
 ### Vercel
 
 1. In Vercel, choose **Add New → Project** and import this GitHub repository. Vercel detects Next.js, so no build settings need changing.
-2. Under **Settings → Environment Variables**, add these for **Production**:
+2. Under **Settings → Build and Deployment**, set **Node.js Version** to **24.x**. `package.json` already pins `24.x`, and keeping the setting the same avoids a build that stops with *Found invalid or discontinued Node.js Version*. Firebase Admin needs Node 22.12 or newer; on older versions, every page that checks the sign-in fails with `ERR_REQUIRE_ESM`.
+3. Under **Settings → Environment Variables**, add these for **Production**:
 
    | Variable | Where it comes from |
    | --- | --- |
@@ -150,9 +151,9 @@ The app is a standard Next.js server app. It needs a Node runtime; it cannot be 
    | `AI_PROVIDER` and its key, `SUPER_ADMIN_EMAILS` | Optional; see [Environment variables](#environment-variables) |
 
    Mark the server-only values as *Sensitive*. `NEXT_PUBLIC_*` values are built into the app, so redeploy after changing one. Give **Preview** deployments these values only if previews may use your live data.
-3. Deploy. From then on, every push to `main` deploys to production.
-4. In the Firebase console, open **Authentication → Settings → Authorized domains** and add your Vercel domain and any custom domain. Google sign-in and the links in verification and password-reset emails only work on listed domains.
-5. Under **Settings → Functions**, set the function region nearest your Firestore database. The default is Washington, D.C. (`iad1`). For Firestore in `asia-south1`, use Mumbai (`bom1`). The dashboards read Firestore on every request, so this has a big effect on their speed.
+4. Deploy. From then on, every push to `main` deploys to production.
+5. In the Firebase console, open **Authentication → Settings → Authorized domains** and add your Vercel domain and any custom domain. Google sign-in and the links in verification and password-reset emails only work on listed domains.
+6. Under **Settings → Functions**, set the function region nearest your Firestore database. The default is Washington, D.C. (`iad1`). For Firestore in `asia-south1`, use Mumbai (`bom1`). The dashboards read Firestore on every request, so this has a big effect on their speed.
 
 **Session reminders.** `vercel.json` runs `/api/cron/session-reminders` every morning around 08:00 IST. Each run reminds students about sessions starting in the next 25 hours, once per session. Vercel's Hobby plan allows one run a day. On Pro, you can change the schedule to hourly (`0 * * * *`), so sessions added during the day are also reminded. Hobby is for non-commercial use only.
 
