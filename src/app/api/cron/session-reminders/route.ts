@@ -6,10 +6,14 @@ import { COL, Timestamp, col, queryDocs, serverNow } from "@/server/db";
 import { notifyProgramStudents } from "@/server/notify";
 
 /**
- * Scheduled job: reminds students about sessions starting in the next 24 hours.
- * Call hourly from Cloud Scheduler / Vercel Cron with `Authorization: Bearer $CRON_SECRET`.
+ * Scheduled job: reminds students about upcoming sessions.
+ * Vercel Cron calls it daily (see vercel.json) with `Authorization: Bearer $CRON_SECRET`.
+ * Hourly calls work too. The 25-hour look-ahead leaves no gap between daily runs,
+ * whose timing drifts within the hour on Vercel's Hobby plan.
  * Idempotent: each session is reminded once (`reminderSentAt`).
  */
+const LOOKAHEAD_MS = 25 * 3600e3;
+
 function authorized(request: NextRequest): boolean {
   const secret = process.env.CRON_SECRET;
   const header = request.headers.get("authorization") ?? "";
@@ -25,7 +29,7 @@ export async function GET(request: NextRequest) {
   const upcoming = await queryDocs<Session>(
     col(COL.sessions)
       .where("startAt", ">=", Timestamp.fromMillis(now))
-      .where("startAt", "<=", Timestamp.fromMillis(now + 24 * 3600e3)),
+      .where("startAt", "<=", Timestamp.fromMillis(now + LOOKAHEAD_MS)),
   );
   let reminded = 0;
   for (const s of upcoming) {

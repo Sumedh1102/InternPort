@@ -85,7 +85,7 @@ Everything under `src/server` imports `server-only`, which throws outside Next.j
 
 ### Route handlers and AI
 
-- **Route handlers:** `src/app/api/*` holds only what Server Actions can't do: the session cookie exchange, streamed AI replies, certificate PDFs, the applications CSV export, file access redirects (`/api/files`) and the session-reminder cron, which requires a `CRON_SECRET` bearer token. POST handlers check `isSameOrigin()` (`src/server/security.ts`).
+- **Route handlers:** `src/app/api/*` holds only what Server Actions can't do: the session cookie exchange, streamed AI replies, certificate PDFs, the applications CSV export, file access redirects (`/api/files`) and the session-reminder cron. The cron requires a `CRON_SECRET` bearer token, and Vercel Cron calls it daily (`vercel.json`). POST handlers check `isSameOrigin()` (`src/server/security.ts`).
 - **AI:** `getAIProvider()` (`src/server/ai`) picks anthropic, gemini or mock from `AI_PROVIDER`. It returns `null`, turning AI off, for `none` or a missing key. `/api/ai/assistant` enforces a per-user daily quota and builds its prompt from the student's enrollment (`src/server/ai/context.ts`).
 
 ## Conventions
